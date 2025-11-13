@@ -1,6 +1,398 @@
 <!DOCTYPE html>
 <html lang="en">
+<head><!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1e1b4b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BreLes Casino">
+    <title>BreLes Casino - Ultimate Edition</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23f59e0b' width='100' height='100' rx='20'/><text y='70' font-size='60' text-anchor='middle' x='50'>🎰</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-slow { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.4; } }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+        @keyframes confetti { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+        
+        .animate-pulse-slow { animation: pulse-slow 4s ease-in-out infinite; }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        .animate-spin-slow { animation: spin 3s linear infinite; }
+        .modal-enter { animation: slideUp 0.3s ease-out; }
+        .shimmer { 
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite;
+        }
+        .confetti {
+            position: fixed;
+            animation: confetti 3s ease-out forwards;
+            pointer-events: none;
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        body { overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+        * { -webkit-user-select: none; -moz-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+        input, textarea { -webkit-user-select: text; -moz-user-select: text; user-select: text; }
+        
+        .scratch-card {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .scratch-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #9ca3af;
+            cursor: pointer;
+        }
+        
+        .chat-bubble {
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white min-h-screen overflow-x-hidden">
+    
+    <!-- Audio Elements -->
+    <audio id="winSound" preload="auto"></audio>
+    <audio id="loseSound" preload="auto"></audio>
+    <audio id="coinSound" preload="auto"></audio>
+    <audio id="levelUpSound" preload="auto"></audio>
+    
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="fixed inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 z-50 flex items-center justify-center">
+        <div class="text-center">
+            <div class="w-24 h-24 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl flex items-center justify-center mb-4 mx-auto animate-pulse text-5xl">🎰</div>
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent mb-2">BreLes Casino</h1>
+            <p class="text-gray-400 mb-4">Ultimate Gaming Experience</p>
+            <div class="mt-6 flex justify-center gap-2">
+                <div class="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"></div>
+                <div class="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                <div class="w-2 h-2 bg-pink-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Animated Background -->
+    <div class="fixed inset-0 opacity-20 pointer-events-none">
+        <div class="absolute top-10 left-10 w-60 h-60 bg-purple-500 rounded-full filter blur-3xl animate-pulse-slow"></div>
+        <div class="absolute bottom-10 right-10 w-72 h-72 bg-pink-500 rounded-full filter blur-3xl animate-pulse-slow" style="animation-delay: 1s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-black/90 backdrop-blur-xl border-b border-white/10">
+        <div class="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
+            <div class="flex items-center space-x-2">
+                <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg text-2xl animate-spin-slow">🎰</div>
+                <div>
+                    <h1 class="text-lg font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">BreLes Casino</h1>
+                    <p class="text-xs text-gray-400">💰 <span id="balance">1000</span> | 🎟️ <span id="tickets">5</span> | 🏆 <span id="level">1</span></p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="showChat()" class="relative p-2 hover:bg-white/10 rounded-lg transition-colors">
+                    <span class="text-xl">💬</span>
+                    <span id="chatBadge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-xs flex items-center justify-center"></span>
+                </button>
+                <button onclick="showAchievements()" class="relative p-2 hover:bg-white/10 rounded-lg transition-colors">
+                    <span class="text-xl">🏆</span>
+                    <span id="achievementBadge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-xs flex items-center justify-center">0</span>
+                </button>
+                <button onclick="openSettings()" class="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                    <span class="text-xl">⚙️</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="appContent" class="relative z-10 px-4 py-6 space-y-6 max-w-7xl mx-auto pb-24">
+        
+        <!-- Tournament Banner -->
+        <div class="bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-purple-400/50 rounded-2xl p-4 backdrop-blur-sm shimmer">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-400 font-bold text-sm mb-1">🎪 TOURNAMENT LIVE</p>
+                    <p class="text-lg font-bold">Win $10,000 Prize Pool!</p>
+                    <p class="text-xs text-gray-400">Ends in: <span id="tournamentTimer">23:45:12</span></p>
+                </div>
+                <button onclick="joinTournament()" class="px-6 py-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full font-bold text-sm whitespace-nowrap active:scale-95 transition-transform">
+                    Join Now
+                </button>
+            </div>
+        </div>
+
+        <!-- Daily Bonus -->
+        <div id="dailyBonusCard" class="bg-gradient-to-r from-yellow-400/20 to-orange-500/20 border border-yellow-400/50 rounded-2xl p-4 backdrop-blur-sm">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-yellow-400 font-bold text-sm mb-1">🎁 Daily Bonus</p>
+                    <p class="text-lg font-bold">Claim your reward!</p>
+                </div>
+                <button onclick="claimDailyBonus()" class="px-6 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full font-bold text-black text-sm whitespace-nowrap active:scale-95 transition-transform">
+                    Claim
+                </button>
+            </div>
+        </div>
+
+        <!-- Level Progress -->
+        <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">⭐</span>
+                    <div>
+                        <p class="font-bold">Level <span id="levelDisplay">1</span></p>
+                        <p class="text-xs text-gray-400"><span id="xpCurrent">0</span>/<span id="xpNeeded">100</span> XP</p>
+                    </div>
+                </div>
+                <span class="text-xs text-yellow-400 font-bold">+<span id="xpMultiplier">1</span>x Multiplier</span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+                <div id="xpBar" class="bg-gradient-to-r from-yellow-400 to-orange-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Grid -->
+        <div class="grid grid-cols-3 gap-3">
+            <button onclick="buyLotteryTicket()" class="bg-gradient-to-br from-green-600/30 to-emerald-600/30 backdrop-blur-sm rounded-xl p-3 border border-white/10 active:scale-95 transition-all">
+                <div class="text-3xl mb-1">🎟️</div>
+                <p class="text-xs font-bold">Lottery</p>
+                <p class="text-xs text-gray-400">$50</p>
+            </button>
+            <button onclick="buyScratchCard()" class="bg-gradient-to-br from-yellow-600/30 to-orange-600/30 backdrop-blur-sm rounded-xl p-3 border border-white/10 active:scale-95 transition-all">
+                <div class="text-3xl mb-1">🎫</div>
+                <p class="text-xs font-bold">Scratch Card</p>
+                <p class="text-xs text-gray-400">$20</p>
+            </button>
+            <button onclick="spinWheel()" class="bg-gradient-to-br from-pink-600/30 to-purple-600/30 backdrop-blur-sm rounded-xl p-3 border border-white/10 active:scale-95 transition-all">
+                <div class="text-3xl mb-1 animate-spin-slow">🎡</div>
+                <p class="text-xs font-bold">Spin Wheel</p>
+                <p class="text-xs text-gray-400">Free!</p>
+            </button>
+        </div>
+
+        <!-- Game Selector -->
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="switchGame('slots')" id="game-slots" class="bg-gradient-to-br from-purple-600/50 to-pink-600/50 backdrop-blur-sm rounded-2xl p-4 border-2 border-yellow-400 active:scale-95 transition-all">
+                <div class="text-4xl mb-2 animate-float">🎰</div>
+                <h3 class="font-bold">Slots</h3>
+                <p class="text-xs text-gray-300">Classic 3-reel</p>
+            </button>
+            <button onclick="switchGame('poker')" id="game-poker" class="bg-gradient-to-br from-blue-600/30 to-cyan-600/30 backdrop-blur-sm rounded-2xl p-4 border-2 border-white/10 active:scale-95 transition-all">
+                <div class="text-4xl mb-2">🃏</div>
+                <h3 class="font-bold">Poker</h3>
+                <p class="text-xs text-gray-300">Texas Hold'em</p>
+            </button>
+            <button onclick="switchGame('roulette')" id="game-roulette" class="bg-gradient-to-br from-red-600/30 to-orange-600/30 backdrop-blur-sm rounded-2xl p-4 border-2 border-white/10 active:scale-95 transition-all">
+                <div class="text-4xl mb-2">🎯</div>
+                <h3 class="font-bold">Roulette</h3>
+                <p class="text-xs text-gray-300">Spin to win</p>
+            </button>
+            <button onclick="switchGame('blackjack')" id="game-blackjack" class="bg-gradient-to-br from-green-600/30 to-emerald-600/30 backdrop-blur-sm rounded-2xl p-4 border-2 border-white/10 active:scale-95 transition-all">
+                <div class="text-4xl mb-2">🂡</div>
+                <h3 class="font-bold">Blackjack</h3>
+                <p class="text-xs text-gray-300">Beat dealer</p>
+            </button>
+        </div>
+
+        <!-- Game Area - Slots -->
+        <div id="slotsGame" class="bg-gradient-to-br from-purple-600/40 to-pink-600/40 backdrop-blur-xl rounded-3xl p-6 border-2 border-yellow-400/30 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-xl font-bold">🎰 Slot Machine</h3>
+                <div class="text-sm bg-black/30 px-3 py-1 rounded-full">Bet: $<span id="betAmount">10</span></div>
+            </div>
+            
+            <div class="flex justify-center space-x-3 mb-6">
+                <div id="slot1" class="w-20 h-24 bg-black/70 rounded-xl flex items-center justify-center text-4xl border-2 border-yellow-400/50 shadow-lg">🎰</div>
+                <div id="slot2" class="w-20 h-24 bg-black/70 rounded-xl flex items-center justify-center text-4xl border-2 border-yellow-400/50 shadow-lg">🎰</div>
+                <div id="slot3" class="w-20 h-24 bg-black/70 rounded-xl flex items-center justify-center text-4xl border-2 border-yellow-400/50 shadow-lg">🎰</div>
+            </div>
+
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <button onclick="adjustBet(-5)" class="w-10 h-10 bg-white/10 rounded-lg font-bold active:scale-95 transition-transform">-</button>
+                <div class="text-center">
+                    <p class="text-xs text-gray-400">Bet Amount</p>
+                    <p class="text-2xl font-bold text-yellow-400">$<span id="betDisplay">10</span></p>
+                </div>
+                <button onclick="adjustBet(5)" class="w-10 h-10 bg-white/10 rounded-lg font-bold active:scale-95 transition-transform">+</button>
+            </div>
+
+            <button id="spinButton" onclick="spinSlots()" class="w-full py-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl font-bold text-black text-lg active:scale-95 transition-transform shadow-lg">SPIN</button>
+            <p id="resultText" class="text-center mt-4 text-lg font-bold min-h-6"></p>
+        </div>
+
+        <!-- Game Area - Poker -->
+        <div id="pokerGame" class="hidden bg-gradient-to-br from-blue-600/40 to-cyan-600/40 backdrop-blur-xl rounded-3xl p-6 border-2 border-yellow-400/30 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">🃏 Texas Hold'em Poker</h3>
+            
+            <div class="space-y-4 mb-4">
+                <div class="bg-black/30 rounded-xl p-4">
+                    <p class="text-sm text-gray-400 mb-2">Community Cards</p>
+                    <div id="communityCards" class="flex gap-2 justify-center text-3xl">🂠 🂠 🂠 🂠 🂠</div>
+                </div>
+                
+                <div class="bg-black/30 rounded-xl p-4">
+                    <p class="text-sm text-gray-400 mb-2">Your Hand</p>
+                    <div id="pokerHand" class="flex gap-2 justify-center text-3xl">🂠 🂠</div>
+                    <p class="mt-2 font-bold text-center"><span id="pokerHandRank">-</span></p>
+                </div>
+
+                <div class="bg-black/30 rounded-xl p-4">
+                    <p class="text-sm text-gray-400 mb-2">Pot: $<span id="pokerPot">0</span></p>
+                    <div class="flex gap-2">
+                        <button onclick="pokerFold()" id="foldBtn" class="flex-1 py-2 bg-red-600 rounded-lg font-bold active:scale-95 transition-transform">Fold</button>
+                        <button onclick="pokerCall()" id="callBtn" class="flex-1 py-2 bg-blue-600 rounded-lg font-bold active:scale-95 transition-transform">Call</button>
+                        <button onclick="pokerRaise()" id="raiseBtn" class="flex-1 py-2 bg-green-600 rounded-lg font-bold active:scale-95 transition-transform">Raise</button>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="startPoker()" id="dealPokerBtn" class="w-full py-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl font-bold text-black active:scale-95 transition-transform">DEAL ($<span id="pokerBet">20</span>)</button>
+            <p id="pokerResult" class="text-center mt-4 text-lg font-bold min-h-6"></p>
+        </div>
+
+        <!-- Game Area - Roulette -->
+        <div id="rouletteGame" class="hidden bg-gradient-to-br from-red-600/40 to-orange-600/40 backdrop-blur-xl rounded-3xl p-6 border-2 border-yellow-400/30 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">🎯 Roulette</h3>
+            
+            <div class="flex justify-center mb-6">
+                <div id="rouletteWheel" class="w-32 h-32 rounded-full border-8 border-yellow-400 flex items-center justify-center bg-gradient-to-br from-red-600 to-black text-5xl font-bold">
+                    <span id="rouletteNumber">?</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button onclick="placeBet('red')" class="py-3 bg-red-600 rounded-xl font-bold active:scale-95 transition-transform">🔴 RED</button>
+                <button onclick="placeBet('black')" class="py-3 bg-gray-900 rounded-xl font-bold active:scale-95 transition-transform">⚫ BLACK</button>
+                <button onclick="placeBet('even')" class="py-3 bg-blue-600 rounded-xl font-bold active:scale-95 transition-transform">EVEN</button>
+                <button onclick="placeBet('odd')" class="py-3 bg-purple-600 rounded-xl font-bold active:scale-95 transition-transform">ODD</button>
+            </div>
+
+            <p id="rouletteResult" class="text-center text-lg font-bold min-h-6"></p>
+        </div>
+
+        <!-- Game Area - Blackjack -->
+        <div id="blackjackGame" class="hidden bg-gradient-to-br from-green-600/40 to-emerald-600/40 backdrop-blur-xl rounded-3xl p-6 border-2 border-yellow-400/30 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">🂡 Blackjack</h3>
+            
+            <div class="space-y-4 mb-4">
+                <div class="bg-black/30 rounded-xl p-4">
+                    <p class="text-sm text-gray-400 mb-2">Dealer</p>
+                    <div id="dealerHand" class="flex gap-2 text-3xl">🂠</div>
+                    <p class="mt-2 font-bold">Total: <span id="dealerTotal">?</span></p>
+                </div>
+                
+                <div class="bg-black/30 rounded-xl p-4">
+                    <p class="text-sm text-gray-400 mb-2">You</p>
+                    <div id="playerHand" class="flex gap-2 text-3xl">🂠</div>
+                    <p class="mt-2 font-bold">Total: <span id="playerTotal">0</span></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <button onclick="blackjackHit()" id="hitButton" class="py-3 bg-green-600 rounded-xl font-bold active:scale-95 transition-transform">HIT</button>
+                <button onclick="blackjackStand()" id="standButton" class="py-3 bg-orange-600 rounded-xl font-bold active:scale-95 transition-transform">STAND</button>
+            </div>
+            
+            <button onclick="startBlackjack()" id="dealButton" class="w-full py-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl font-bold text-black active:scale-95 transition-transform">DEAL ($10)</button>
+            <p id="blackjackResult" class="text-center mt-4 text-lg font-bold min-h-6"></p>
+        </div>
+
+        <!-- Stats Dashboard -->
+        <div class="grid grid-cols-3 gap-3">
+            <div class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 text-center">
+                <p class="text-2xl font-bold text-green-400">$<span id="totalWon">0</span></p>
+                <p class="text-xs text-gray-400 mt-1">Total Won</p>
+            </div>
+            <div class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 text-center">
+                <p class="text-2xl font-bold text-blue-400"><span id="gamesPlayed">0</span></p>
+                <p class="text-xs text-gray-400 mt-1">Games</p>
+            </div>
+            <div class="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 text-center">
+                <p class="text-2xl font-bold text-purple-400"><span id="winStreak">0</span></p>
+                <p class="text-xs text-gray-400 mt-1">Win Streak</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-white/10 z-40">
+        <div class="grid grid-cols-5 gap-1 px-2 py-2 max-w-7xl mx-auto">
+            <button onclick="setActiveTab('home')" id="tab-home" class="flex flex-col items-center py-2 px-1 rounded-lg transition-colors text-yellow-400 bg-yellow-400/10">
+                <span class="text-xl mb-1">🏠</span>
+                <span class="text-xs font-medium">Home</span>
+            </button>
+            <button onclick="setActiveTab('games')" id="tab-games" class="flex flex-col items-center py-2 px-1 rounded-lg transition-colors text-gray-400">
+                <span class="text-xl mb-1">🎮</span>
+                <span class="text-xs font-medium">Games</span>
+            </button>
+            <button onclick="setActiveTab('rewards')" id="tab-rewards" class="flex flex-col items-center py-2 px-1 rounded-lg transition-colors text-gray-400">
+                <span class="text-xl mb-1">🎁</span>
+                <span class="text-xs font-medium">Rewards</span>
+            </button>
+            <button onclick="setActiveTab('leaderboard')" id="tab-leaderboard" class="flex flex-col items-center py-2 px-1 rounded-lg transition-colors text-gray-400">
+                <span class="text-xl mb-1">🏆</span>
+                <span class="text-xs font-medium">Leaders</span>
+            </button>
+            <button onclick="setActiveTab('profile')" id="tab-profile" class="flex flex-col items-center py-2 px-1 rounded-lg transition-colors text-gray-400">
+                <span class="text-xl mb-1">👤</span>
+                <span class="text-xs font-medium">Profile</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Modals Container -->
+    <div id="modalsContainer"></div>
+
+    <script>
+        // ========== GAME STATE ==========
+        let gameState = {
+            balance: 1000,
+            betAmount: 10,
+            totalWon: 0,
+            gamesPlayed: 0,
+            winStreak: 0,
+            level: 1,
+            xp: 0,
+            xpNeeded: 100,
+            tickets: 5,
+            scratchCards: 0,
+            currentGame: 'slots',
+            spinning: false,
+            achievements: [],
+            dailyBonusClaimed: false,
+            lastPlayed: null,
+            soundEnabled: true,
+            vibrationEnabled: true,
+            chatMessages: [],
+            tournamentScore: 0,
+            tournamentJoined: false,
+            wheelSpinsLeft: 3,
+            lastWheelSpin: null
+        };
+
+        // ========== ACHIEVEMENTS ==========
+        const achievements = [
+            { id: 'first_win', name: 'First Win', desc: 'Win your first game', icon: '🎉', reward: 100 },
+            { id: 'win_streak_5', name: 'Hot Streak', desc: 'Win 5 games in a row', icon: '🔥', reward: 500 },
+            { id: 'jackpot', name: 'Jackpot!', desc: 'Hit a jackpot', icon: '💎', reward: 1000 },
+            { id: 'level_5', name: 'Rising Star', desc: 'Reach level 5', icon: '⭐', reward: 250 },
+            { id: 'play_100', name: 'Dedicated Player', desc: 'Play 100 games', icon: '🎮', reward: 750 },
+            { id: 'big_win', name: 'High Roller', desc: 'Win $5000 in one game', icon: '💰', reward: 2000 },
+            { id: 'lottery_win', name: 'Lucky Winner', desc: 'Win the lottery', icon: '🎟️', reward: 1500 },
+            { id: 'chat_10', name: 'Social Butterfly', desc: 'Send 10 chat messages', icon: '💬', reward: 300 }
+        ];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1e1b4b">
